@@ -45,6 +45,22 @@
                         </button>
                     </form>
 
+                    <!-- Fast Quick Demo Accounts for Evaluators & Testing -->
+                    <div class="card bg-light border-0 rounded-3 p-3 mb-3">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="text-muted small fw-bold"><i class="fa-solid fa-key text-warning me-1"></i> Quick Test Credentials:</span>
+                            <span class="badge bg-secondary-subtle text-secondary" style="font-size: .68rem;">1-Click Fill</span>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary btn-sm flex-fill d-inline-flex align-items-center justify-content-center gap-1 shadow-sm" onclick="fillCredentials('priya@example.com', 'demo123')">
+                                <i class="fa-solid fa-user me-1"></i> Demo User
+                            </button>
+                            <button type="button" class="btn btn-outline-dark btn-sm flex-fill d-inline-flex align-items-center justify-content-center gap-1 shadow-sm" onclick="fillCredentials('admin@cloudsafety.org', 'admin123')">
+                                <i class="fa-solid fa-shield-halved text-warning me-1"></i> Cloud Admin
+                            </button>
+                        </div>
+                    </div>
+
                     <div class="text-center text-muted small">
                         Don't have an account yet? <a href="{{ url_for('register') }}" class="text-danger fw-semibold text-decoration-none">Register here</a>
                     </div>
@@ -57,6 +73,12 @@
 
 {% block scripts %}
 <script>
+function fillCredentials(email, password) {
+    const emailEl = document.getElementById('emailInput');
+    const passEl  = document.getElementById('passwordInput');
+    if (emailEl) emailEl.value = email;
+    if (passEl)  passEl.value  = password;
+}
 function togglePasswordVisibility() {
     const input = document.getElementById('passwordInput');
     const icon = document.getElementById('togglePassIcon');
