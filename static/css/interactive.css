@@ -1,0 +1,254 @@
+/* ── SafePass Interactive Theme, Cursor & FX Styles ────────────────────── */
+
+/* ── Color Themes ── */
+:root, [data-theme="light"] {
+    --bg-main: #f8fafc;
+    --bg-card: #ffffff;
+    --bg-card-subtle: #f1f5f9;
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
+    --border-color: #e2e8f0;
+    --navbar-bg: #1e293b;
+    --navbar-border: #ef4444;
+    --cursor-dot: #ef4444;
+    --cursor-halo: rgba(239, 68, 68, 0.45);
+    --glow-color: rgba(239, 68, 68, 0.2);
+}
+
+[data-theme="dark"] {
+    --bg-main: #0b1120;
+    --bg-card: #151f32;
+    --bg-card-subtle: #1e293b;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --border-color: #334155;
+    --navbar-bg: #090e17;
+    --navbar-border: #ef4444;
+    --cursor-dot: #38bdf8;
+    --cursor-halo: rgba(56, 189, 248, 0.45);
+    --glow-color: rgba(56, 189, 248, 0.25);
+}
+
+[data-theme="night-safety"] {
+    --bg-main: #020617;
+    --bg-card: #0b1329;
+    --bg-card-subtle: #111d38;
+    --text-primary: #f0fdf4;
+    --text-secondary: #86efac;
+    --border-color: #10b981;
+    --navbar-bg: #010409;
+    --navbar-border: #10b981;
+    --cursor-dot: #10b981;
+    --cursor-halo: rgba(16, 185, 129, 0.55);
+    --glow-color: rgba(16, 185, 129, 0.35);
+}
+
+/* Global Smooth Transitions */
+body {
+    background-color: var(--bg-main) !important;
+    color: var(--text-primary) !important;
+    transition: background-color 0.35s ease, color 0.35s ease;
+}
+
+/* Dark & Night-Safety Theming Rules */
+[data-theme="dark"] .bg-light,
+[data-theme="night-safety"] .bg-light {
+    background-color: var(--bg-main) !important;
+}
+
+[data-theme="dark"] .card,
+[data-theme="night-safety"] .card,
+[data-theme="dark"] .report-card,
+[data-theme="night-safety"] .report-card,
+[data-theme="dark"] .modal-content,
+[data-theme="night-safety"] .modal-content {
+    background-color: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35) !important;
+}
+
+[data-theme="dark"] .text-dark,
+[data-theme="night-safety"] .text-dark {
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .text-secondary,
+[data-theme="dark"] .text-muted,
+[data-theme="night-safety"] .text-secondary,
+[data-theme="night-safety"] .text-muted {
+    color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .bg-white,
+[data-theme="night-safety"] .bg-white {
+    background-color: var(--bg-card-subtle) !important;
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select,
+[data-theme="night-safety"] .form-control,
+[data-theme="night-safety"] .form-select {
+    background-color: var(--bg-card-subtle) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .form-control:focus,
+[data-theme="night-safety"] .form-control:focus {
+    box-shadow: 0 0 0 3px var(--glow-color) !important;
+    border-color: var(--cursor-dot) !important;
+}
+
+[data-theme="dark"] .footer,
+[data-theme="night-safety"] .footer {
+    background-color: var(--navbar-bg) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .filter-pill,
+[data-theme="night-safety"] .filter-pill {
+    background: var(--bg-card) !important;
+    color: var(--text-secondary) !important;
+    border-color: var(--border-color) !important;
+}
+[data-theme="dark"] .filter-pill.active,
+[data-theme="night-safety"] .filter-pill.active {
+    background: #ef4444 !important;
+    color: #fff !important;
+    border-color: #ef4444 !important;
+}
+
+/* Night-Safety HUD Glow effect */
+[data-theme="night-safety"] .navbar {
+    box-shadow: 0 4px 20px rgba(16, 185, 129, 0.15) !important;
+}
+[data-theme="night-safety"] .page-hero {
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    box-shadow: 0 10px 35px rgba(16, 185, 129, 0.1) !important;
+}
+
+/* ── Custom Interactive Glowing Moving Cursor ── */
+#cursor-dot {
+    position: fixed;
+    top: 0; left: 0;
+    width: 8px; height: 8px;
+    background: var(--cursor-dot, #ef4444);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 999999;
+    transform: translate(-50%, -50%);
+    transition: opacity 0.3s ease, background 0.3s ease;
+    box-shadow: 0 0 12px var(--cursor-dot, #ef4444);
+}
+
+#cursor-halo {
+    position: fixed;
+    top: 0; left: 0;
+    width: 36px; height: 36px;
+    border: 2px solid var(--cursor-halo, rgba(239, 68, 68, 0.45));
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 999998;
+    transform: translate(-50%, -50%);
+    transition: width 0.22s ease-out, height 0.22s ease-out, background 0.22s ease-out, border-color 0.22s ease-out, opacity 0.3s ease;
+    backdrop-filter: blur(0.5px);
+}
+
+#cursor-halo.hovering {
+    width: 58px; height: 58px;
+    background: var(--glow-color, rgba(239, 68, 68, 0.15));
+    border-color: var(--cursor-dot, #ef4444);
+    box-shadow: 0 0 25px var(--glow-color, rgba(239, 68, 68, 0.3));
+}
+
+#cursor-halo.clicking {
+    transform: translate(-50%, -50%) scale(0.85);
+    background: var(--cursor-halo, rgba(239, 68, 68, 0.3));
+}
+
+/* Click Spark Wave */
+.click-ripple {
+    position: fixed;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    border: 2px solid var(--cursor-dot, #ef4444);
+    pointer-events: none;
+    z-index: 999997;
+    transform: translate(-50%, -50%) scale(0.6);
+    animation: rippleWave 0.55s cubic-bezier(0.1, 0.8, 0.25, 1) forwards;
+}
+
+@keyframes rippleWave {
+    0% { transform: translate(-50%, -50%) scale(0.6); opacity: 1; border-width: 3px; }
+    100% { transform: translate(-50%, -50%) scale(4.8); opacity: 0; border-width: 1px; }
+}
+
+/* ── 3D Card Hover Perspective ── */
+.card, .report-card, .hover-lift {
+    transition: transform 0.2s cubic-bezier(0.2, 0, 0.3, 1), box-shadow 0.2s ease !important;
+    transform-style: preserve-3d;
+    will-change: transform;
+}
+
+/* ── Live Vigilance Pulse Dot ── */
+.pulse-indicator {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    background-color: #10b981;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    animation: pulseDot 2s infinite;
+}
+
+@keyframes pulseDot {
+    0%   { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70%  { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* ── Scroll to Top Floating Button with Progress Ring ── */
+.scroll-to-top {
+    position: fixed;
+    bottom: 2rem;
+    left: 2rem;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--navbar-bg, #1e293b);
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 1040;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(15px);
+    transition: all 0.25s ease;
+}
+
+.scroll-to-top.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.scroll-to-top:hover {
+    transform: translateY(-3px) scale(1.08);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.scroll-to-top svg {
+    position: absolute;
+    top: 1px; left: 1px;
+    transform: rotate(-90deg);
+}
+
+.progress-ring-circle {
+    transition: stroke-dashoffset 0.15s ease;
+}

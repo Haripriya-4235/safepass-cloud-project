@@ -1,0 +1,864 @@
+{% extends "base.html" %}
+
+{% block title %}Incident Reports & Evidence - Women Safety Portal{% endblock %}
+
+{% block head %}
+<style>
+    :root {
+        --danger-grad: linear-gradient(135deg, #ef4444, #dc2626);
+        --warn-grad:   linear-gradient(135deg, #f59e0b, #d97706);
+        --safe-grad:   linear-gradient(135deg, #10b981, #059669);
+    }
+    /* ── Page header ── */
+    .page-hero {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        color: white;
+        border-radius: 1.25rem;
+        padding: 2rem 2.5rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .page-hero::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='20'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
+    }
+    /* ── Evidence card ── */
+    .report-card {
+        border-radius: 1rem;
+        border: 1px solid #e2e8f0;
+        overflow: hidden;
+        transition: transform .2s ease, box-shadow .2s ease;
+        background: white;
+    }
+    .report-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 40px rgba(0,0,0,.10) !important;
+    }
+    /* ── Evidence thumbnail ── */
+    .evidence-thumb {
+        height: 200px;
+        overflow: hidden;
+        background: #f1f5f9;
+        position: relative;
+        cursor: pointer;
+    }
+    .evidence-thumb img {
+        width: 100%; height: 100%;
+        object-fit: cover;
+        transition: transform .35s ease;
+    }
+    .report-card:hover .evidence-thumb img { transform: scale(1.05); }
+    .evidence-thumb .overlay {
+        position: absolute; inset: 0;
+        background: rgba(0,0,0,.45);
+        display: flex; align-items: center; justify-content: center;
+        opacity: 0; transition: opacity .25s ease;
+        color: white; font-size: 2rem;
+    }
+    .report-card:hover .evidence-thumb .overlay { opacity: 1; }
+    .no-photo-placeholder {
+        height: 200px;
+        background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        color: #94a3b8; font-size: 0.82rem;
+    }
+    /* ── Severity badges ── */
+    .sev-high   { background: var(--danger-grad); color: white; }
+    .sev-medium { background: var(--warn-grad);   color: white; }
+    .sev-low    { background: var(--safe-grad);   color: white; }
+    .sev-badge  {
+        display: inline-block; padding: .2rem .6rem;
+        border-radius: 999px; font-size: .72rem; font-weight: 700;
+        letter-spacing: .04em; text-transform: uppercase;
+    }
+    /* ── Doc pill ── */
+    .doc-pill {
+        display: inline-flex; align-items: center; gap: .35rem;
+        background: #eff6ff; border: 1px solid #bfdbfe;
+        color: #2563eb; border-radius: .4rem;
+        padding: .25rem .65rem; font-size: .78rem; font-weight: 600;
+        text-decoration: none; transition: background .2s;
+    }
+    .doc-pill:hover { background: #dbeafe; color: #1d4ed8; }
+    /* ── Evidence count badge ── */
+    .evidence-count {
+        position: absolute; top: .6rem; left: .6rem;
+        background: rgba(0,0,0,.65); color: white;
+        border-radius: .4rem; padding: .2rem .5rem;
+        font-size: .72rem; font-weight: 600; backdrop-filter: blur(4px);
+    }
+    /* ── Storage badge ── */
+    .storage-badge {
+        position: absolute; top: .6rem; right: .6rem;
+        background: rgba(0,0,0,.65); color: white;
+        border-radius: .4rem; padding: .2rem .55rem;
+        font-size: .72rem; font-weight: 600; backdrop-filter: blur(4px);
+    }
+    /* ── Lightbox ── */
+    #lightbox {
+        display: none; position: fixed; inset: 0; z-index: 9999;
+        background: rgba(0,0,0,.92); align-items: center; justify-content: center;
+    }
+    #lightbox.active { display: flex; }
+    #lightbox img {
+        max-width: 90vw; max-height: 88vh;
+        border-radius: .75rem; box-shadow: 0 30px 80px rgba(0,0,0,.5);
+    }
+    #lightbox-close {
+        position: absolute; top: 1.25rem; right: 1.5rem;
+        font-size: 2rem; color: white; cursor: pointer;
+        background: rgba(255,255,255,.1); border: none;
+        border-radius: 50%; width: 44px; height: 44px;
+        display: flex; align-items: center; justify-content: center;
+        transition: background .2s;
+    }
+    #lightbox-close:hover { background: rgba(255,255,255,.25); }
+    /* ── Upload zone ── */
+    .upload-zone {
+        border: 2px dashed #cbd5e1;
+        border-radius: .75rem;
+        padding: 1.25rem;
+        text-align: center;
+        transition: border-color .2s, background .2s;
+        cursor: pointer;
+        background: #f8fafc;
+    }
+    .upload-zone:hover, .upload-zone.dragover {
+        border-color: #6366f1; background: #eef2ff;
+    }
+    .upload-zone input[type="file"] {
+        position: absolute; inset: 0; opacity: 0; cursor: pointer;
+    }
+    .preview-img {
+        max-height: 140px; border-radius: .5rem;
+        margin-top: .75rem; display: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,.1);
+    }
+    /* ── Filter bar ── */
+    .filter-pill {
+        border-radius: 999px; padding: .3rem 1rem;
+        border: 1.5px solid #e2e8f0; background: white;
+        font-size: .82rem; cursor: pointer; transition: all .15s;
+        font-weight: 500; color: #64748b;
+    }
+    .filter-pill.active, .filter-pill:hover {
+        background: #1e293b; color: white; border-color: #1e293b;
+    }
+    /* ── Modal ── */
+    .modal-content { border-radius: 1.25rem; border: none; }
+    .modal-header  { border-radius: 1.25rem 1.25rem 0 0; }
+    /* ── Sticky submit banner ── */
+    .submit-banner {
+        background: linear-gradient(90deg, #1e293b 0%, #0f172a 100%);
+        border-radius: .9rem;
+        padding: .85rem 1.4rem;
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 1rem; margin-bottom: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,.18);
+    }
+    /* ── Floating action button ── */
+    .fab-report {
+        position: fixed; bottom: 2rem; right: 2rem; z-index: 1050;
+        width: 60px; height: 60px; border-radius: 50%;
+        background: linear-gradient(135deg, #ef4444, #b91c1c);
+        color: white; border: none; font-size: 1.5rem;
+        box-shadow: 0 6px 24px rgba(239,68,68,.5);
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; transition: transform .2s, box-shadow .2s;
+        animation: fabPulse 2.5s ease-in-out infinite;
+    }
+    .fab-report:hover {
+        transform: scale(1.12);
+        box-shadow: 0 10px 32px rgba(239,68,68,.65);
+        animation: none;
+    }
+    .fab-tooltip {
+        position: fixed; bottom: 2.5rem; right: 5rem; z-index: 1050;
+        background: #1e293b; color: white; font-size: .82rem;
+        padding: .4rem .85rem; border-radius: .5rem; white-space: nowrap;
+        pointer-events: none; opacity: 0; transition: opacity .2s;
+        font-weight: 600;
+    }
+    .fab-report:hover + .fab-tooltip { opacity: 1; }
+    @keyframes fabPulse {
+        0%,100% { box-shadow: 0 6px 24px rgba(239,68,68,.5); }
+        50%      { box-shadow: 0 6px 36px rgba(239,68,68,.8); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# ─── Lightbox ─────────────────────────────────────────────────────────── #}
+<div id="lightbox">
+    <button id="lightbox-close" onclick="closeLightbox()">✕</button>
+    <img id="lightbox-img" src="" alt="Evidence Photo">
+</div>
+
+<div class="container py-3">
+
+    {# ─── Hero ───────────────────────────────────────────────────────────── #}
+    <div class="page-hero shadow mb-4 position-relative">
+        <div class="row align-items-center">
+            <div class="col-12">
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <div style="background:rgba(239,68,68,.2);border-radius:.75rem;padding:.6rem .9rem;">
+                        <i class="fa-solid fa-shield-halved fa-lg text-danger"></i>
+                    </div>
+                    <div>
+                        <h3 class="fw-bold mb-0" style="font-size:1.4rem;">Community Safety Evidence Reports</h3>
+                        <p class="mb-0 opacity-75 small">Crowdsourced incident evidence — photos, documents & location data</p>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 flex-wrap mt-3">
+                    <span class="badge bg-danger text-white px-3 py-2 d-inline-flex align-items-center gap-1 shadow-sm">
+                        <i class="fa-solid fa-circle-exclamation me-1"></i>
+                        <span>{{ reports | selectattr('severity','equalto','high') | list | length }} High Risk</span>
+                    </span>
+                    <span class="badge bg-warning text-dark fw-bold px-3 py-2 d-inline-flex align-items-center gap-1 shadow-sm">
+                        <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                        <span>{{ reports | selectattr('severity','equalto','medium') | list | length }} Medium</span>
+                    </span>
+                    <span class="badge bg-success text-white px-3 py-2 d-inline-flex align-items-center gap-1 shadow-sm">
+                        <i class="fa-solid fa-shield-check me-1"></i>
+                        <span>{{ reports | selectattr('category','equalto','safe_zone') | list | length }} Safe Zones</span>
+                    </span>
+                    <span class="badge bg-light text-dark fw-semibold px-3 py-2 d-inline-flex align-items-center gap-1 shadow-sm border">
+                        <i class="fa-solid fa-file-lines text-secondary me-1"></i>
+                        <span>{{ reports | length }} Total Reports</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ─── Sticky Submit Banner ──────────────────────────────────────────────── #}
+    <div class="submit-banner mb-4">
+        <div class="d-flex align-items-center gap-3">
+            <div style="background:rgba(239,68,68,.15);border-radius:.6rem;padding:.5rem .7rem;">
+                <i class="fa-solid fa-camera text-danger fa-lg"></i>
+            </div>
+            <div>
+                <div class="fw-bold text-white" style="font-size:.95rem;">Witnessed an unsafe area?</div>
+                <div class="text-white opacity-75" style="font-size:.8rem;">Upload a photo or document as evidence — takes less than 1 minute.</div>
+            </div>
+        </div>
+        <button class="btn btn-warning fw-bold px-4 py-2 flex-shrink-0"
+                data-bs-toggle="modal" data-bs-target="#newReportModal"
+                onclick="openReportModal()"
+                style="font-size:.92rem;white-space:nowrap;">
+            <i class="fa-solid fa-plus me-1"></i> Add New Report
+        </button>
+    </div>
+
+    {# ─── Filter bar ──────────────────────────────────────────────────────── #}
+    <div class="d-flex gap-2 flex-wrap mb-4" id="filterBar">
+        <button class="filter-pill active" onclick="filterReports('all', this)">All Reports</button>
+        <button class="filter-pill" onclick="filterReports('high', this)">High Risk</button>
+        <button class="filter-pill" onclick="filterReports('medium', this)">Medium</button>
+        <button class="filter-pill" onclick="filterReports('low', this)">Low / Safe</button>
+        <button class="filter-pill" onclick="filterReports('photo', this)">Has Photo</button>
+        <button class="filter-pill" onclick="filterReports('doc', this)">Has Document</button>
+        <button class="filter-pill" onclick="filterReports('safe_zone', this)">Safe Zones</button>
+    </div>
+
+    {# ─── Report Cards Grid ───────────────────────────────────────────────── #}
+    <div class="row g-4" id="reportsGrid">
+        {% for r in reports %}
+        <div class="col-md-6 col-lg-4 report-item"
+             data-severity="{{ r.severity }}"
+             data-category="{{ r.category }}"
+             data-has-photo="{{ 'yes' if r.image_url else 'no' }}"
+             data-has-doc="{{ 'yes' if r.document_url else 'no' }}">
+            <div class="report-card shadow-sm h-100">
+
+                {# ── Photo / Placeholder ── #}
+                {% if r.image_url %}
+                <div class="evidence-thumb" onclick="openLightbox('{{ r.image_url }}')">
+                    <img src="{{ r.image_url }}"
+                         alt="Evidence Photo"
+                         onerror="this.parentElement.style.display='none'; this.parentElement.nextElementSibling.style.display='flex';">
+                    <div class="overlay"><i class="fa-solid fa-magnifying-glass-plus"></i></div>
+
+                    {# Evidence count badge #}
+                    {% set ev_count = (1 if r.image_url else 0) + (1 if r.document_url else 0) %}
+                    {% if ev_count > 0 %}
+                    <span class="evidence-count">
+                        <i class="fa-solid fa-paperclip me-1"></i>{{ ev_count }} Evidence
+                    </span>
+                    {% endif %}
+
+                    {# Storage badge #}
+                    {% if r.s3_key and r.s3_key.startswith('incident') %}
+                    <span class="storage-badge">
+                        <i class="fa-brands fa-aws me-1 text-warning"></i>S3
+                    </span>
+                    {% else %}
+                    <span class="storage-badge">
+                        <i class="fa-solid fa-server me-1 text-info"></i>Local
+                    </span>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="no-photo-placeholder">
+                    <i class="fa-solid fa-image fa-2x mb-2 opacity-30"></i>
+                    <span>No photo attached</span>
+                    {% if r.document_url %}
+                    <span class="mt-1 text-primary small">
+                        <i class="fa-solid fa-file-lines me-1"></i>Document evidence available
+                    </span>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                {# ── Card Body ── #}
+                <div class="card-body p-3 d-flex flex-column">
+
+                    {# Title + Severity #}
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="fw-bold text-dark mb-0 me-2" style="font-size:.9rem; line-height:1.3;">
+                            {{ r.title }}
+                        </h6>
+                        <span class="sev-badge sev-{{ r.severity }} flex-shrink-0">
+                            {{ r.severity }}
+                        </span>
+                    </div>
+
+                    {# Description #}
+                    <p class="text-muted small mb-3 flex-grow-1" style="line-height:1.5;">
+                        {{ r.description or 'No additional details provided.' }}
+                    </p>
+
+                    {# ── Evidence attachments ── #}
+                    {% if r.image_url or r.document_url %}
+                    <div class="border rounded-3 p-2 mb-3 bg-light">
+                        <div class="small fw-semibold text-secondary mb-1">
+                            <i class="fa-solid fa-paperclip me-1"></i>Evidence Attached
+                        </div>
+                        <div class="d-flex flex-wrap gap-1">
+                            {% if r.image_url %}
+                            <span class="doc-pill" onclick="openLightbox('{{ r.image_url }}')" style="cursor:pointer;" title="Click to view photo">
+                                <i class="fa-solid fa-image text-success"></i> Photo Evidence
+                            </span>
+                            {% endif %}
+                        </div>
+                        {% if r.document_url %}
+                        <div class="w-100 mt-2 p-2 rounded-3 bg-white border d-flex flex-column gap-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle p-2 rounded-2">
+                                    <i class="fa-solid fa-file-lines fa-lg"></i>
+                                </span>
+                                <div class="text-truncate flex-grow-1" style="min-width: 0;">
+                                    <div class="small fw-bold text-dark text-truncate" title="{{ r.document_name or 'Evidence Document' }}">
+                                        {{ r.document_name or 'Evidence Document' }}
+                                    </div>
+                                    <div class="text-muted" style="font-size: .72rem;">Official Proof Document</div>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                {# Option 1: View without downloading #}
+                                <button type="button" class="btn btn-sm btn-outline-primary flex-fill d-inline-flex align-items-center justify-content-center gap-1 fw-semibold py-1"
+                                        onclick="viewDocument('{{ r.document_url }}', '{{ (r.document_name or 'Evidence Document') | replace('\'', '\\\'') }}')"
+                                        title="View document in browser without downloading">
+                                    <i class="fa-solid fa-eye"></i> View
+                                </button>
+                                {# Option 2: Download directly #}
+                                <a href="{{ r.document_url }}" download class="btn btn-sm btn-primary flex-fill d-inline-flex align-items-center justify-content-center gap-1 fw-semibold py-1 text-white text-decoration-none shadow-sm"
+                                   title="Download file to computer">
+                                    <i class="fa-solid fa-download"></i> Download
+                                </a>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    {# ── Meta info ── #}
+                    <div class="border-top pt-2">
+                        <div class="d-flex justify-content-between small text-muted mb-1">
+                            <span>
+                                <i class="fa-solid fa-tag me-1"></i>
+                                {{ r.category | replace('_', ' ') | title }}
+                            </span>
+                            <span>
+                                <i class="fa-solid fa-user me-1"></i>
+                                {{ r.reporter_name or 'Anonymous' }}
+                            </span>
+                        </div>
+                        {% if r.incident_time %}
+                        <div class="small text-muted mb-1">
+                            <i class="fa-solid fa-clock me-1 text-warning"></i>
+                            Incident: <strong>{{ r.incident_time }}</strong>
+                        </div>
+                        {% endif %}
+                        {% if r.witness_name %}
+                        <div class="small text-muted mb-1">
+                            <i class="fa-solid fa-eye me-1 text-primary"></i>
+                            Witness: <strong>{{ r.witness_name }}</strong>
+                        </div>
+                        {% endif %}
+                        <div class="d-flex justify-content-between align-items-center small text-muted">
+                            <span>
+                                <i class="fa-solid fa-clock me-1"></i>
+                                {{ r.reported_at[:16] if r.reported_at else '' }}
+                            </span>
+                            <a href="https://www.google.com/maps?q={{ r.latitude }},{{ r.longitude }}"
+                               target="_blank" class="text-primary text-decoration-none fw-semibold">
+                                <i class="fa-solid fa-map-location-dot me-1"></i>View Map
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="fa-solid fa-shield-check fa-4x text-success mb-3 opacity-50"></i>
+                <h5 class="text-muted">No Reports Logged Yet</h5>
+                <p class="text-muted small">Be the first to report an unsafe area and help protect others.</p>
+                <button class="btn btn-warning fw-bold mt-2" data-bs-toggle="modal" data-bs-target="#newReportModal" onclick="openReportModal()">
+                    <i class="fa-solid fa-plus me-1"></i> Submit First Report
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>{# close container #}
+
+{# ─── Submit Report Modal ──────────────────────────────────────────────────── #}
+<div class="modal fade" id="newReportModal" tabindex="-1" style="z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content shadow-lg">
+
+            <div class="modal-header bg-dark text-white" style="border-radius:1.25rem 1.25rem 0 0;">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-triangle-exclamation text-warning fa-lg"></i>
+                    <div>
+                        <h5 class="modal-title fw-bold mb-0">Submit Safety Evidence Report</h5>
+                        <small class="opacity-75">Upload photos and documents as proof</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" onclick="closeReportModal()"></button>
+            </div>
+
+            <form method="POST" action="{{ url_for('reports') }}" enctype="multipart/form-data" id="reportForm">
+                <div class="modal-body p-4">
+
+                    {# ── Basic info ── #}
+                    <div class="row g-3 mb-3">
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold text-secondary">
+                                <i class="fa-solid fa-heading me-1"></i>Incident Title *
+                            </label>
+                            <input type="text" name="title" class="form-control"
+                                   placeholder="e.g. Broken streetlights near Metro Gate 3" required>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-semibold text-secondary">
+                                <i class="fa-solid fa-tag me-1"></i>Category
+                            </label>
+                            <select name="category" class="form-select">
+                                <option value="poorly_lit"> Poorly Lit / Dark Area</option>
+                                <option value="isolated_area"> Deserted / Isolated Area</option>
+                                <option value="harassment"> Harassment Reported</option>
+                                <option value="suspicious_activity"> Suspicious Activity</option>
+                                <option value="infrastructure"> Infrastructure Failure</option>
+                                <option value="safe_zone"> Safe Zone / Police Booth</option>
+                            </select>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-semibold text-secondary">
+                                <i class="fa-solid fa-signal me-1"></i>Severity Level
+                            </label>
+                            <select name="severity" class="form-select">
+                                <option value="high">[HIGH] High Risk — Immediate Danger</option>
+                                <option value="medium" selected>[MED] Medium — Caution Needed</option>
+                                <option value="low">[LOW] Low — Minor Concern</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {# ── Description ── #}
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">
+                            <i class="fa-solid fa-align-left me-1"></i>Detailed Description *
+                        </label>
+                        <textarea name="description" class="form-control" rows="3"
+                                  placeholder="Describe what happened, when, and how it affects safety in this area..." required></textarea>
+                    </div>
+
+                    {# ── Witness + Time ── #}
+                    <div class="row g-3 mb-3">
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-semibold text-secondary">
+                                <i class="fa-solid fa-eye me-1"></i>Witness Name (Optional)
+                            </label>
+                            <input type="text" name="witness_name" class="form-control"
+                                   placeholder="Name of witness, if any">
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-semibold text-secondary">
+                                <i class="fa-solid fa-clock me-1"></i>Incident Date & Time
+                            </label>
+                            <input type="datetime-local" name="incident_time" class="form-control"
+                                   id="incidentTimeInput">
+                        </div>
+                    </div>
+
+                    {# ── Location ── #}
+                    <div class="row g-2 mb-3">
+                        <div class="col-sm-5">
+                            <label class="form-label small fw-semibold text-secondary">
+                                <i class="fa-solid fa-location-dot me-1 text-danger"></i>Latitude *
+                            </label>
+                            <input type="number" step="any" id="reportLat" name="latitude"
+                                   class="form-control font-monospace" placeholder="e.g. 13.0827" required>
+                        </div>
+                        <div class="col-sm-5">
+                            <label class="form-label small fw-semibold text-secondary">
+                                <i class="fa-solid fa-location-crosshairs me-1 text-danger"></i>Longitude *
+                            </label>
+                            <input type="number" step="any" id="reportLng" name="longitude"
+                                   class="form-control font-monospace" placeholder="e.g. 80.2707" required>
+                        </div>
+                        <div class="col-sm-2 d-flex align-items-end">
+                            <button type="button" class="btn btn-outline-primary w-100" onclick="getGPSForReport()" title="Detect GPS">
+                                <i class="fa-solid fa-crosshairs"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="small text-muted mb-3">
+                        <i class="fa-solid fa-info-circle me-1 text-primary"></i>
+                        Click the crosshair button to auto-fill your current GPS coordinates.
+                    </div>
+
+                    <hr class="my-3">
+                    <div class="fw-semibold text-dark mb-3">
+                        <i class="fa-solid fa-paperclip me-2 text-primary"></i>Evidence Attachments
+                    </div>
+
+                    <div class="row g-3">
+                        {# ── Photo Upload ── #}
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-secondary">
+                                <i class="fa-solid fa-camera me-1 text-success"></i>Photo Evidence
+                            </label>
+                            <div class="upload-zone position-relative" id="photoZone"
+                                 ondragover="handleDragOver(event,'photoZone')"
+                                 ondragleave="handleDragLeave(event,'photoZone')"
+                                 ondrop="handleDrop(event,'incident_image','photoPreview','photoZone')">
+                                <input type="file" name="incident_image" id="incident_image"
+                                       accept="image/*"
+                                       onchange="previewFile(this, 'photoPreview')">
+                                <i class="fa-solid fa-cloud-arrow-up fa-2x text-muted mb-2"></i>
+                                <div class="small text-muted">
+                                    <strong>Click or drag</strong> a photo here<br>
+                                    <span class="text-secondary" style="font-size:.75rem;">JPG, PNG, WEBP · Max 16 MB</span>
+                                </div>
+                                <img id="photoPreview" class="preview-img mx-auto d-block">
+                            </div>
+                        </div>
+
+                        {# ── Document Upload ── #}
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-secondary">
+                                <i class="fa-solid fa-file-lines me-1 text-primary"></i>Document Evidence
+                            </label>
+                            <div class="upload-zone position-relative" id="docZone"
+                                 ondragover="handleDragOver(event,'docZone')"
+                                 ondragleave="handleDragLeave(event,'docZone')"
+                                 ondrop="handleDrop(event,'incident_document','docPreview','docZone')">
+                                <input type="file" name="incident_document" id="incident_document"
+                                       accept=".pdf,.doc,.docx,.txt,.xlsx,.csv,.odt"
+                                       onchange="previewDocument(this)">
+                                <i class="fa-solid fa-file-arrow-up fa-2x text-muted mb-2"></i>
+                                <div class="small text-muted">
+                                    <strong>Click or drag</strong> a document here<br>
+                                    <span class="text-secondary" style="font-size:.75rem;">PDF, DOC, DOCX, TXT, XLSX · Max 16 MB</span>
+                                </div>
+                                <div id="docPreview" class="mt-2" style="display:none;">
+                                    <div class="d-flex align-items-center gap-2 bg-white border rounded-2 p-2">
+                                        <i class="fa-solid fa-file-lines text-primary fa-lg"></i>
+                                        <span id="docName" class="small fw-semibold text-truncate" style="max-width:150px;"></span>
+                                        <span id="docSize" class="small text-muted ms-auto"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {# S3 storage note #}
+                    <div class="mt-3 p-2 rounded-3 border bg-light-subtle d-flex align-items-center gap-2 small text-muted">
+                        <i class="fa-brands fa-aws text-warning fa-lg"></i>
+                        <span>Files are securely stored on <strong>Amazon S3</strong> (or local storage if AWS is not configured).</span>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-top-0 pt-0 px-4 pb-4">
+                    <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal" onclick="closeReportModal()">Cancel</button>
+                    <button type="submit" class="btn btn-warning fw-bold px-5 text-dark" id="submitBtn">
+                        <i class="fa-solid fa-paper-plane me-2"></i>Submit Evidence Report
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{# ─── Document Viewer Modal (View without Downloading) ─────────────────────── #}
+<div class="modal fade" id="docViewerModal" tabindex="-1" style="z-index: 1070;">
+    <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width: 950px;">
+        <div class="modal-content shadow-lg border-0" style="border-radius: 1.25rem; overflow: hidden;">
+            <div class="modal-header bg-dark text-white py-2 px-3 d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-2 text-truncate me-2" style="min-width: 0;">
+                    <span class="badge bg-warning text-dark fw-bold px-2 py-1"><i class="fa-solid fa-file-lines me-1"></i>Evidence Viewer</span>
+                    <span class="fw-bold text-truncate text-white" id="docViewerTitle" style="font-size: .95rem;">Evidence Document</span>
+                </div>
+                <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                    <a id="docViewerDownloadBtn" href="" download class="btn btn-sm btn-warning text-dark fw-bold px-3 py-1 shadow-sm" title="Download file to computer">
+                        <i class="fa-solid fa-download me-1"></i>Download
+                    </a>
+                    <a id="docViewerNewTabBtn" href="" target="_blank" class="btn btn-sm btn-outline-light px-2 py-1" title="Open directly in dedicated browser tab">
+                        <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>New Tab
+                    </a>
+                    <button type="button" class="btn-close btn-close-white ms-1" data-bs-dismiss="modal" onclick="closeDocViewer()"></button>
+                </div>
+            </div>
+            <div class="modal-body p-0 bg-secondary-subtle" style="height: 75vh; position: relative;">
+                <iframe id="docViewerIframe" src="" style="width: 100%; height: 100%; border: none;"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ─── Floating Action Button ───────────────────────────────────────────────── #}
+<button class="fab-report" data-bs-toggle="modal" data-bs-target="#newReportModal" onclick="openReportModal()" title="Add New Report">
+    <i class="fa-solid fa-plus"></i>
+</button>
+<div class="fab-tooltip">Add New Report</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* ── Document Viewer Logic (Preview without downloading) ── */
+function viewDocument(url, name) {
+    const titleEl = document.getElementById('docViewerTitle');
+    const dlBtn   = document.getElementById('docViewerDownloadBtn');
+    const tabBtn  = document.getElementById('docViewerNewTabBtn');
+    const iframe  = document.getElementById('docViewerIframe');
+    
+    if (titleEl) titleEl.textContent = name || 'Evidence Document';
+    if (dlBtn) dlBtn.href = url;
+    if (tabBtn) tabBtn.href = url;
+    if (iframe) iframe.src = url;
+
+    const el = document.getElementById('docViewerModal');
+    if (!el) return;
+    if (window.bootstrap && bootstrap.Modal) {
+        try {
+            const m = bootstrap.Modal.getOrCreateInstance(el);
+            m.show();
+            return;
+        } catch(e) {}
+    }
+    // Fallback: manual CSS display
+    el.style.display = 'block';
+    el.style.opacity = '1';
+    el.classList.add('show');
+    document.body.classList.add('modal-open');
+    let bd = document.getElementById('docBackdrop');
+    if (!bd) {
+        bd = document.createElement('div');
+        bd.className = 'modal-backdrop fade show';
+        bd.id = 'docBackdrop';
+        bd.onclick = closeDocViewer;
+        document.body.appendChild(bd);
+    }
+}
+
+function closeDocViewer() {
+    const el = document.getElementById('docViewerModal');
+    if (window.bootstrap && bootstrap.Modal) {
+        try {
+            const m = bootstrap.Modal.getInstance(el);
+            if (m) m.hide();
+        } catch(e) {}
+    }
+    if (el) {
+        el.style.display = 'none';
+        el.style.opacity = '';
+        el.classList.remove('show');
+    }
+    document.body.classList.remove('modal-open');
+    const iframe = document.getElementById('docViewerIframe');
+    if (iframe) iframe.src = '';
+    const bd = document.getElementById('docBackdrop');
+    if (bd) bd.remove();
+}
+
+/* ── Robust Modal opener with fallback ── */
+function openReportModal() {
+    const el = document.getElementById('newReportModal');
+    if (!el) { alert('Report form not found. Please refresh the page.'); return; }
+    // Try Bootstrap 5 API first
+    if (window.bootstrap && bootstrap.Modal) {
+        try {
+            const m = bootstrap.Modal.getOrCreateInstance(el);
+            m.show();
+            return;
+        } catch (e) {
+            console.warn('Bootstrap modal show failed, falling back:', e);
+        }
+    }
+    // Fallback: manual CSS display
+    el.style.display = 'block';
+    el.style.opacity = '1';
+    el.classList.add('show');
+    document.body.classList.add('modal-open');
+    let bd = document.getElementById('manualBackdrop');
+    if (!bd) {
+        bd = document.createElement('div');
+        bd.className = 'modal-backdrop fade show';
+        bd.id = 'manualBackdrop';
+        bd.onclick = closeReportModal;
+        document.body.appendChild(bd);
+    }
+}
+
+function closeReportModal() {
+    const el = document.getElementById('newReportModal');
+    if (window.bootstrap && bootstrap.Modal) {
+        try {
+            const m = bootstrap.Modal.getInstance(el);
+            if (m) m.hide();
+        } catch (e) {}
+    }
+    if (el) {
+        el.style.display = 'none';
+        el.style.opacity = '';
+        el.classList.remove('show');
+    }
+    document.body.classList.remove('modal-open');
+    const bd = document.getElementById('manualBackdrop');
+    if (bd) bd.remove();
+}
+
+/* ── Pre-fill incident time to now ── */
+document.addEventListener('DOMContentLoaded', () => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    const el = document.getElementById('incidentTimeInput');
+    if (el) el.value = now.toISOString().slice(0, 16);
+});
+
+/* ── GPS detection ── */
+function getGPSForReport() {
+    if (!navigator.geolocation) { alert('Geolocation not supported.'); return; }
+    navigator.geolocation.getCurrentPosition(
+        (pos) => {
+            document.getElementById('reportLat').value = pos.coords.latitude.toFixed(6);
+            document.getElementById('reportLng').value = pos.coords.longitude.toFixed(6);
+        },
+        (err) => alert('Unable to get GPS: ' + err.message)
+    );
+}
+
+/* ── Photo preview ── */
+function previewFile(input, previewId) {
+    const preview = document.getElementById(previewId);
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+/* ── Document preview ── */
+function previewDocument(input) {
+    const preview = document.getElementById('docPreview');
+    const nameEl  = document.getElementById('docName');
+    const sizeEl  = document.getElementById('docSize');
+    if (input.files && input.files[0]) {
+        const f = input.files[0];
+        nameEl.textContent = f.name;
+        sizeEl.textContent = (f.size / 1024 / 1024).toFixed(2) + ' MB';
+        preview.style.display = 'block';
+    }
+}
+
+/* ── Drag & Drop ── */
+function handleDragOver(e, zoneId) {
+    e.preventDefault();
+    document.getElementById(zoneId).classList.add('dragover');
+}
+function handleDragLeave(e, zoneId) {
+    document.getElementById(zoneId).classList.remove('dragover');
+}
+function handleDrop(e, inputName, previewId, zoneId) {
+    e.preventDefault();
+    document.getElementById(zoneId).classList.remove('dragover');
+    const input = document.querySelector(`input[name="${inputName}"]`);
+    if (e.dataTransfer.files.length > 0) {
+        const dt = new DataTransfer();
+        dt.items.add(e.dataTransfer.files[0]);
+        input.files = dt.files;
+        if (inputName === 'incident_image') previewFile(input, previewId);
+        else previewDocument(input);
+    }
+}
+
+/* ── Lightbox ── */
+function openLightbox(src) {
+    document.getElementById('lightbox-img').src = src;
+    document.getElementById('lightbox').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('active');
+    document.body.style.overflow = '';
+}
+document.getElementById('lightbox').addEventListener('click', function(e) {
+    if (e.target === this) closeLightbox();
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLightbox(); });
+
+/* ── Filter cards ── */
+function filterReports(type, btn) {
+    document.querySelectorAll('#filterBar .filter-pill').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.report-item').forEach(item => {
+        let show = false;
+        if      (type === 'all')       show = true;
+        else if (type === 'photo')     show = item.dataset.hasPhoto === 'yes';
+        else if (type === 'doc')       show = item.dataset.hasDoc   === 'yes';
+        else if (type === 'safe_zone') show = item.dataset.category === 'safe_zone';
+        else                           show = item.dataset.severity === type;
+        item.style.display = show ? '' : 'none';
+    });
+}
+
+/* ── Submit spinner ── */
+const reportForm = document.getElementById('reportForm');
+if (reportForm) {
+    reportForm.addEventListener('submit', function(e) {
+        if (!reportForm.checkValidity()) {
+            return;
+        }
+        const btn = document.getElementById('submitBtn');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Uploading Evidence...';
+        }
+    });
+}
+</script>
+{% endblock %}

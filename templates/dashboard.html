@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Women Safety Cloud{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+
+    <!-- Emergency SOS Hero Banner -->
+    <div class="row justify-content-center mb-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-lg bg-white rounded-4 overflow-hidden text-center p-4 p-md-5 position-relative">
+                <div class="mb-3">
+                    <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill fw-semibold border border-success">
+                        <i class="fa-solid fa-satellite-dish me-1"></i> GPS Ready &bull; AWS Cloud Monitoring
+                    </span>
+                </div>
+
+                <h2 class="fw-bold text-dark mb-1">Emergency Distress Assistance</h2>
+                <p class="text-muted small mb-4">Pressing this button transmits your exact GPS location to emergency contacts and records an alert in the cloud.</p>
+
+                <!-- Big Circular SOS Trigger -->
+                <div class="d-flex justify-content-center my-2">
+                    <button id="sosHeroBtn" class="sos-giant-btn shadow-lg" onclick="triggerEmergencySOS()">
+                        <div class="sos-content">
+                            <i class="fa-solid fa-triangle-exclamation fa-3x mb-2"></i>
+                            <span class="d-block fw-black fs-2">SOS</span>
+                            <small class="text-uppercase tracking-wider">TAP FOR HELP</small>
+                        </div>
+                    </button>
+                </div>
+
+                <div id="sosStatusText" class="mt-3 text-muted small">
+                    <i class="fa-solid fa-shield me-1"></i> Standby mode &bull; Ready to transmit coordinates
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Journey Alert (If user has started a journey) -->
+    {% if active_journey %}
+    <div class="row justify-content-center mb-4">
+        <div class="col-lg-8">
+            <div class="card border-primary shadow-sm rounded-4 bg-primary-subtle p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="badge bg-primary text-white mb-1"><i class="fa-solid fa-location-arrow me-1"></i> ACTIVE JOURNEY</span>
+                        <h5 class="fw-bold mb-0 text-dark">{{ active_journey.origin_name }} &rarr; {{ active_journey.destination_name }}</h5>
+                        <small class="text-muted">Route: {{ active_journey.chosen_route_name }} (Safety Score: {{ active_journey.safety_score }}/100)</small>
+                    </div>
+                    <button class="btn btn-outline-danger btn-sm fw-semibold" onclick="endCurrentJourney({{ active_journey.id }})">
+                        <i class="fa-solid fa-flag-checkered me-1"></i> Finish Safely
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick Navigation Cards Grid -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm rounded-4 p-3 hover-lift">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="p-3 bg-success-subtle text-success rounded-3 me-3">
+                        <i class="fa-solid fa-map-location-dot fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-0">Safe Route Finder</h5>
+                        <small class="text-muted">Avoid poorly lit & high-risk alleys</small>
+                    </div>
+                </div>
+                <p class="text-muted small">Compare route options based on crowd density, streetlight scores, and incident reports.</p>
+                <a href="{{ url_for('safe_route') }}" class="btn btn-success btn-sm w-100 mt-auto fw-semibold">
+                    <i class="fa-solid fa-magnifying-glass-location me-1"></i> Explore Safe Routes
+                </a>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm rounded-4 p-3 hover-lift">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="p-3 bg-primary-subtle text-primary rounded-3 me-3">
+                        <i class="fa-solid fa-address-book fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-0">SOS Contacts</h5>
+                        <small class="text-muted">{{ contacts_count }} contact(s) configured</small>
+                    </div>
+                </div>
+                <p class="text-muted small">Add family members and trusted guardians who will receive your location during distress.</p>
+                <a href="{{ url_for('contacts') }}" class="btn btn-primary btn-sm w-100 mt-auto fw-semibold">
+                    <i class="fa-solid fa-user-plus me-1"></i> Manage Contacts
+                </a>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm rounded-4 p-3 hover-lift">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="p-3 bg-warning-subtle text-warning-emphasis rounded-3 me-3">
+                        <i class="fa-solid fa-camera-retro fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-0">Report Unsafe Area</h5>
+                        <small class="text-muted">Cloud photo upload (S3)</small>
+                    </div>
+                </div>
+                <p class="text-muted small">Report broken lights, suspicious groups, or harassment to alert other women in the area.</p>
+                <a href="{{ url_for('reports') }}" class="btn btn-warning btn-sm w-100 mt-auto fw-semibold text-dark">
+                    <i class="fa-solid fa-bullhorn me-1"></i> Submit Report
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Community Safety Feed -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0"><i class="fa-solid fa-bullhorn text-danger me-2"></i>Recent Community Safety Alerts</h5>
+                    <a href="{{ url_for('reports') }}" class="text-decoration-none small text-danger fw-semibold">View All</a>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Incident / Warning</th>
+                                <th>Category</th>
+                                <th>Severity</th>
+                                <th>Location (Lat/Lng)</th>
+                                <th>Reported</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in recent_reports %}
+                            <tr>
+                                <td class="fw-semibold text-dark">{{ r.title }}</td>
+                                <td>
+                                    <span class="badge bg-secondary-subtle text-secondary text-uppercase">{{ r.category }}</span>
+                                </td>
+                                <td>
+                                    {% if r.severity == 'high' %}
+                                        <span class="badge bg-danger">HIGH RISK</span>
+                                    {% elif r.severity == 'medium' %}
+                                        <span class="badge bg-warning text-dark">MEDIUM</span>
+                                    {% else %}
+                                        <span class="badge bg-success">SAFE ZONE</span>
+                                    {% endif %}
+                                </td>
+                                <td><small class="text-muted">{{ r.latitude }}, {{ r.longitude }}</small></td>
+                                <td><small class="text-muted">{{ r.reported_at }}</small></td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-3">No active safety warnings in this zone.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function endCurrentJourney(journeyId) {
+    if (confirm("Are you sure you reached your destination safely?")) {
+        fetch('/api/journey/end', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({journey_id: journeyId})
+        })
+        .then(res => res.json())
+        .then(data => {
+            alert(data.message || "Journey finished safely!");
+            window.location.reload();
+        });
+    }
+}
+</script>
+{% endblock %}

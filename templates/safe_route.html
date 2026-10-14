@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}Safe Route Finder - Women Safety Portal{% endblock %}
+
+{% block head %}
+<style>
+    #map {
+        height: 560px;
+        width: 100%;
+        border-radius: 1rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        z-index: 1;
+        cursor: crosshair;
+    }
+    .route-card {
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+    }
+    .route-card:hover, .route-card.selected {
+        border-color: #10B981 !important;
+        background-color: #f0fdf4 !important;
+        transform: translateY(-2px);
+    }
+    .search-results-dropdown {
+        position: absolute;
+        width: 100%;
+        z-index: 1050;
+        max-height: 220px;
+        overflow-y: auto;
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    }
+    .search-result-item {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .search-result-item:hover {
+        background-color: #f8fafc;
+        color: #2563eb;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+    <!-- Header -->
+    <div class="row mb-3 align-items-center">
+        <div class="col-md-7">
+            <h3 class="fw-bold mb-1 text-dark"><i class="fa-solid fa-map-location-dot text-success me-2"></i>Safe Route Finder</h3>
+            <p class="text-muted small mb-0">Select ANY city or search any street, landmark, or GPS location worldwide.</p>
+        </div>
+        <div class="col-md-5 text-md-end mt-2 mt-md-0">
+            <span class="badge bg-success-subtle text-success border border-success me-1"><i class="fa-solid fa-lightbulb me-1"></i>Streetlight Rating</span>
+            <span class="badge bg-primary-subtle text-primary border border-primary me-1"><i class="fa-solid fa-user-shield me-1"></i>Police Patrols</span>
+            <span class="badge bg-danger-subtle text-danger border border-danger"><i class="fa-solid fa-triangle-exclamation me-1"></i>Incident Deductions</span>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <!-- Controls Column -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 p-3 mb-3">
+                <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-sliders me-1 text-primary"></i> Choose Your Location</h6>
+
+                <!-- Quick City Selector -->
+                <div class="mb-3">
+                    <label class="form-label text-secondary small fw-semibold">Select City / Region:</label>
+                    <select id="citySelector" class="form-select form-select-sm" onchange="onCitySelected(this.value)">
+                        <option value="gps" selected>📍 Use My Real Device GPS Location</option>
+                        <option value="chennai">Chennai (Central &rarr; Guindy)</option>
+                        <option value="coimbatore">Coimbatore (Gandhipuram &rarr; RS Puram)</option>
+                        <option value="bengaluru">Bengaluru (Majestic &rarr; Koramangala)</option>
+                        <option value="hyderabad">Hyderabad (Secunderabad &rarr; Hitec City)</option>
+                        <option value="mumbai">Mumbai (CST &rarr; Bandra)</option>
+                        <option value="delhi">Delhi (Connaught Place &rarr; Hauz Khas)</option>
+                        <option value="kolkata">Kolkata (Howrah &rarr; Park Street)</option>
+                        <option value="pune">Pune (Station &rarr; Koregaon Park)</option>
+                        <option value="ahmedabad">Ahmedabad (Station &rarr; Satellite)</option>
+                        <option value="jaipur">Jaipur (Station &rarr; MI Road)</option>
+                        <option value="custom">✏️ Custom Location (Search / Click Map)</option>
+                    </select>
+                </div>
+
+                <!-- Start Location (Origin) with Search -->
+                <div class="mb-3 position-relative">
+                    <label class="form-label small fw-semibold text-secondary d-flex justify-content-between align-items-center">
+                        <span><i class="fa-solid fa-circle-dot text-success me-1"></i> Start Location (Origin)</span>
+                        <small id="originCoordsBadge" class="text-muted font-monospace" style="font-size: 0.75rem;">—</small>
+                    </label>
+                    <div class="input-group">
+                        <input type="text" id="originInput" class="form-control form-control-sm" placeholder="Type any city, street, landmark..." value="" oninput="onAddressInput('origin')">
+                        <button class="btn btn-outline-secondary btn-sm" type="button" onclick="searchAddress('origin')" title="Search Address">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm" type="button" onclick="getCurrentLocationForOrigin()" title="My GPS">
+                            <i class="fa-solid fa-crosshairs"></i>
+                        </button>
+                    </div>
+                    <div id="originSearchResults" class="search-results-dropdown d-none"></div>
+                    <input type="hidden" id="originLat" value="">
+                    <input type="hidden" id="originLng" value="">
+                </div>
+
+                <!-- Destination with Search -->
+                <div class="mb-3 position-relative">
+                    <label class="form-label small fw-semibold text-secondary d-flex justify-content-between align-items-center">
+                        <span><i class="fa-solid fa-location-dot text-danger me-1"></i> Destination</span>
+                        <small id="destCoordsBadge" class="text-muted font-monospace" style="font-size: 0.75rem;">—</small>
+                    </label>
+                    <div class="input-group">
+                        <input type="text" id="destInput" class="form-control form-control-sm" placeholder="Type any destination address..." value="" oninput="onAddressInput('dest')">
+                        <button class="btn btn-outline-secondary btn-sm" type="button" onclick="searchAddress('dest')" title="Search Address">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
+                    </div>
+                    <div id="destSearchResults" class="search-results-dropdown d-none"></div>
+                    <input type="hidden" id="destLat" value="">
+                    <input type="hidden" id="destLng" value="">
+                </div>
+
+                <!-- Map Click Action Buttons -->
+                <div class="mb-3 p-2 bg-light rounded-3 border">
+                    <span class="small fw-semibold text-secondary d-block mb-1"><i class="fa-solid fa-hand-pointer me-1"></i> Click on Map to Set:</span>
+                    <div class="d-flex gap-2">
+                        <button id="btnSetOriginMode" class="btn btn-sm btn-outline-success flex-fill" onclick="setClickMode('origin')">
+                            Set Start Pin
+                        </button>
+                        <button id="btnSetDestMode" class="btn btn-sm btn-outline-danger flex-fill" onclick="setClickMode('dest')">
+                            Set Dest Pin
+                        </button>
+                    </div>
+                    <div id="clickModeHelp" class="small text-muted text-center mt-1" style="font-size: 0.75rem;">
+                        (Or simply drag the markers directly on the map!)
+                    </div>
+                </div>
+
+                <!-- Compute Routes Button -->
+                <button class="btn btn-success w-100 fw-semibold shadow-sm py-2 mb-2" onclick="findRoutes()">
+                    <i class="fa-solid fa-route me-1"></i> Calculate Safe Routes
+                </button>
+                <div id="routeLoading" class="text-center text-muted small py-2 d-none">
+                    <i class="fa-solid fa-spinner fa-spin me-1"></i> Computing safe roads and scoring...
+                </div>
+            </div>
+
+            <!-- Route Alternatives Selection List -->
+            <div id="routesContainer" class="d-flex flex-column gap-2">
+                <!-- Dynamically populated by JS -->
+            </div>
+        </div>
+
+        <!-- Map Column -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 p-2 bg-white position-relative">
+                <div id="map"></div>
+                
+                <!-- Map Legend Overlay -->
+                <div class="position-absolute bottom-0 start-0 m-4 p-2 bg-white bg-opacity-95 rounded-3 shadow-sm border small" style="z-index: 999; max-width: 260px;">
+                    <div class="fw-bold mb-1"><i class="fa-solid fa-circle-info me-1 text-primary"></i>Safety Legend</div>
+                    <div class="d-flex align-items-center mb-1"><span class="badge bg-success me-2" style="width:14px; height:14px;"> </span> Safe Route (80-100)</div>
+                    <div class="d-flex align-items-center mb-1"><span class="badge bg-warning me-2" style="width:14px; height:14px;"> </span> Moderate Risk (55-79)</div>
+                    <div class="d-flex align-items-center mb-1"><span class="badge bg-danger me-2" style="width:14px; height:14px;"> </span> Risky Shortcut (&lt;55)</div>
+                    <div class="d-flex align-items-center text-muted"><i class="fa-solid fa-arrows-up-down-left-right text-secondary me-2"></i> Drag pins to customize path</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/map.js') }}"></script>
+{% endblock %}
