@@ -8,12 +8,37 @@
         <div class="col-md-5">
             <div class="card shadow-lg border-0 rounded-4">
                 <div class="card-body p-4 p-md-5">
-                    <div class="text-center mb-4">
-                        <div class="d-inline-flex align-items-center justify-content-center bg-danger-subtle text-danger rounded-circle p-3 mb-2">
-                            <i class="fa-solid fa-shield-cat fa-2x"></i>
+                    <div class="text-center mb-3">
+                        <div class="d-inline-flex align-items-center justify-content-center bg-danger-subtle text-danger rounded-circle p-3 mb-2" id="loginRoleBadge">
+                            <i class="fa-solid fa-shield-cat fa-2x" id="loginRoleIcon"></i>
                         </div>
-                        <h3 class="fw-bold text-dark">Welcome Back</h3>
-                        <p class="text-muted small">Women Safety & Safe Route Finder Portal</p>
+                        <h3 class="fw-bold text-dark" id="loginHeading">Welcome Back</h3>
+                        <p class="text-muted small mb-0" id="loginSubheading">Women Safety & Safe Route Finder Portal</p>
+                    </div>
+
+                    <!-- 2 Role Switching Options (Citizen vs Cloud Admin) -->
+                    <div class="p-1 mb-3 rounded-pill d-flex gap-1 border" style="background: #f1f5f9;">
+                        <button type="button" class="btn btn-sm flex-fill fw-bold rounded-pill btn-danger text-white shadow-sm" id="roleUserBtn" onclick="switchLoginRole('user')">
+                            <i class="fa-solid fa-user me-1"></i> Citizen / User
+                        </button>
+                        <button type="button" class="btn btn-sm flex-fill fw-semibold rounded-pill text-secondary bg-transparent border-0" id="roleAdminBtn" onclick="switchLoginRole('admin')">
+                            <i class="fa-solid fa-shield-halved me-1"></i> Cloud Admin
+                        </button>
+                    </div>
+
+                    <!-- Quick Auto-fill & Clear helper -->
+                    <div class="d-flex align-items-center justify-content-between mb-3 px-2 py-1 rounded-2 border bg-light small">
+                        <span class="text-muted" style="font-size: .78rem;" id="roleInfoText">
+                            <i class="fa-solid fa-circle-info text-primary me-1"></i>Citizen commuter access
+                        </span>
+                        <div class="d-flex gap-1">
+                            <button type="button" class="btn btn-xs btn-outline-primary px-2 py-0 small rounded-pill fw-semibold" id="autoFillBtn" onclick="autoFillCurrentRole()" style="font-size: .72rem;">
+                                ⚡ Fill Credentials
+                            </button>
+                            <button type="button" class="btn btn-xs btn-outline-secondary px-2 py-0 small rounded-pill" onclick="clearInputs()" style="font-size: .72rem;" title="Clear fields">
+                                ✕ Clear
+                            </button>
+                        </div>
                     </div>
 
                     <form method="POST" action="{{ url_for('login') }}" autocomplete="off">
@@ -40,26 +65,10 @@
                             </div>
                         </div>
 
-                        <button type="submit" class="btn btn-danger w-100 py-2 fw-semibold shadow-sm mb-3">
-                            <i class="fa-solid fa-right-to-bracket me-1"></i> Sign In
+                        <button type="submit" class="btn btn-danger w-100 py-2 fw-semibold shadow-sm mb-3" id="signInSubmitBtn">
+                            <i class="fa-solid fa-right-to-bracket me-1"></i> Sign In as Citizen
                         </button>
                     </form>
-
-                    <!-- Fast Quick Demo Accounts for Evaluators & Testing -->
-                    <div class="card bg-light border-0 rounded-3 p-3 mb-3">
-                        <div class="d-flex align-items-center justify-content-between mb-2">
-                            <span class="text-muted small fw-bold"><i class="fa-solid fa-key text-warning me-1"></i> Quick Test Credentials:</span>
-                            <span class="badge bg-secondary-subtle text-secondary" style="font-size: .68rem;">1-Click Fill</span>
-                        </div>
-                        <div class="d-flex gap-2">
-                            <button type="button" class="btn btn-outline-secondary btn-sm flex-fill d-inline-flex align-items-center justify-content-center gap-1 shadow-sm" onclick="fillCredentials('priya@example.com', 'demo123')">
-                                <i class="fa-solid fa-user me-1"></i> Demo User
-                            </button>
-                            <button type="button" class="btn btn-outline-dark btn-sm flex-fill d-inline-flex align-items-center justify-content-center gap-1 shadow-sm" onclick="fillCredentials('admin@cloudsafety.org', 'admin123')">
-                                <i class="fa-solid fa-shield-halved text-warning me-1"></i> Cloud Admin
-                            </button>
-                        </div>
-                    </div>
 
                     <div class="text-center text-muted small">
                         Don't have an account yet? <a href="{{ url_for('register') }}" class="text-danger fw-semibold text-decoration-none">Register here</a>
@@ -73,12 +82,69 @@
 
 {% block scripts %}
 <script>
-function fillCredentials(email, password) {
-    const emailEl = document.getElementById('emailInput');
-    const passEl  = document.getElementById('passwordInput');
-    if (emailEl) emailEl.value = email;
-    if (passEl)  passEl.value  = password;
+let currentRole = 'user';
+
+function switchLoginRole(role) {
+    currentRole = role;
+    const userBtn = document.getElementById('roleUserBtn');
+    const adminBtn = document.getElementById('roleAdminBtn');
+    const roleBadge = document.getElementById('loginRoleBadge');
+    const roleIcon = document.getElementById('loginRoleIcon');
+    const subheading = document.getElementById('loginSubheading');
+    const infoText = document.getElementById('roleInfoText');
+    const submitBtn = document.getElementById('signInSubmitBtn');
+    const autoFillBtn = document.getElementById('autoFillBtn');
+
+    if (role === 'admin') {
+        // Admin active state
+        adminBtn.className = 'btn btn-sm flex-fill fw-bold rounded-pill btn-dark text-warning shadow-sm';
+        userBtn.className = 'btn btn-sm flex-fill fw-semibold rounded-pill text-secondary bg-transparent border-0';
+        
+        roleBadge.className = 'd-inline-flex align-items-center justify-content-center bg-warning-subtle text-warning rounded-circle p-3 mb-2';
+        roleIcon.className = 'fa-solid fa-cloud fa-2x';
+        subheading.textContent = 'AWS Cloud Infrastructure & Admin Console';
+        infoText.innerHTML = '<i class="fa-solid fa-shield-halved text-warning me-1"></i>AWS Cloud Admin (EC2, RDS, S3)';
+        submitBtn.className = 'btn btn-dark w-100 py-2 fw-bold text-warning shadow-sm mb-3';
+        submitBtn.innerHTML = '<i class="fa-solid fa-cloud me-2"></i>Sign In as Cloud Admin';
+        autoFillBtn.textContent = '⚡ Fill Cloud Admin';
+        
+        // Auto-fill Cloud Admin credentials
+        document.getElementById('emailInput').value = 'admin@cloudsafety.org';
+        document.getElementById('passwordInput').value = 'admin123';
+    } else {
+        // User active state
+        userBtn.className = 'btn btn-sm flex-fill fw-bold rounded-pill btn-danger text-white shadow-sm';
+        adminBtn.className = 'btn btn-sm flex-fill fw-semibold rounded-pill text-secondary bg-transparent border-0';
+        
+        roleBadge.className = 'd-inline-flex align-items-center justify-content-center bg-danger-subtle text-danger rounded-circle p-3 mb-2';
+        roleIcon.className = 'fa-solid fa-shield-cat fa-2x';
+        subheading.textContent = 'Women Safety & Safe Route Finder Portal';
+        infoText.innerHTML = '<i class="fa-solid fa-circle-info text-primary me-1"></i>Citizen commuter access';
+        submitBtn.className = 'btn btn-danger w-100 py-2 fw-semibold shadow-sm mb-3';
+        submitBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket me-1"></i>Sign In as Citizen';
+        autoFillBtn.textContent = '⚡ Fill Demo User';
+        
+        // Auto-fill Demo User credentials
+        document.getElementById('emailInput').value = 'priya@example.com';
+        document.getElementById('passwordInput').value = 'demo123';
+    }
 }
+
+function autoFillCurrentRole() {
+    if (currentRole === 'admin') {
+        document.getElementById('emailInput').value = 'admin@cloudsafety.org';
+        document.getElementById('passwordInput').value = 'admin123';
+    } else {
+        document.getElementById('emailInput').value = 'priya@example.com';
+        document.getElementById('passwordInput').value = 'demo123';
+    }
+}
+
+function clearInputs() {
+    document.getElementById('emailInput').value = '';
+    document.getElementById('passwordInput').value = '';
+}
+
 function togglePasswordVisibility() {
     const input = document.getElementById('passwordInput');
     const icon = document.getElementById('togglePassIcon');
@@ -91,13 +157,10 @@ function togglePasswordVisibility() {
     }
 }
 
-// Strictly force-clear any browser autofill on page load
+// Ensure clean initial load
 window.addEventListener('load', () => {
     setTimeout(() => {
-        const email = document.getElementById('emailInput');
-        const pass = document.getElementById('passwordInput');
-        if (email) email.value = '';
-        if (pass) pass.value = '';
+        clearInputs();
     }, 50);
 });
 </script>
