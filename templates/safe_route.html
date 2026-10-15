@@ -66,23 +66,110 @@
             <div class="card border-0 shadow-sm rounded-4 p-3 mb-3">
                 <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-sliders me-1 text-primary"></i> Choose Your Location</h6>
 
-                <!-- Quick City Selector -->
+                <!-- Universal City & Region Selector -->
                 <div class="mb-3">
-                    <label class="form-label text-secondary small fw-semibold">Select City / Region:</label>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label class="form-label text-secondary small fw-bold mb-0">
+                            <i class="fa-solid fa-earth-asia text-primary me-1"></i> Choose City / Region:
+                        </label>
+                        <span id="activeCityBadge" class="badge bg-primary-subtle text-primary border border-primary-subtle" style="font-size: 0.72rem;">
+                            <i class="fa-solid fa-map-pin me-1"></i>All Regions
+                        </span>
+                    </div>
+
+                    <!-- Direct Search for ANY City Worldwide -->
+                    <div class="position-relative mb-2">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-white border-end-0 text-primary">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </span>
+                            <input type="text" id="citySearchInput" class="form-control form-control-sm border-start-0 ps-1"
+                                   placeholder="Type ANY city, town or district (e.g. Madurai, Salem...)"
+                                   oninput="onCitySearchInput(this.value)" autocomplete="off">
+                            <button class="btn btn-outline-secondary btn-sm" type="button" onclick="clearCitySearch()" title="Clear search">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                            <button class="btn btn-primary btn-sm px-2 fw-semibold" type="button" onclick="searchCityRegion()" title="Find City">
+                                Find
+                            </button>
+                        </div>
+                        <div id="citySearchResults" class="search-results-dropdown d-none shadow"></div>
+                    </div>
+
+                    <!-- Categorized Presets Dropdown -->
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="text-muted" style="font-size: 0.73rem;">Or choose from popular regions:</span>
+                        <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none text-success" style="font-size: 0.73rem;" onclick="getCurrentLocationForOrigin()" title="Use Live GPS">
+                            <i class="fa-solid fa-location-crosshairs me-1"></i>Use My GPS
+                        </button>
+                    </div>
                     <select id="citySelector" class="form-select form-select-sm" onchange="onCitySelected(this.value)">
-                        <option value="gps" selected>📍 Use My Real Device GPS Location</option>
-                        <option value="chennai">Chennai (Central &rarr; Guindy)</option>
-                        <option value="coimbatore">Coimbatore (Gandhipuram &rarr; RS Puram)</option>
-                        <option value="bengaluru">Bengaluru (Majestic &rarr; Koramangala)</option>
-                        <option value="hyderabad">Hyderabad (Secunderabad &rarr; Hitec City)</option>
-                        <option value="mumbai">Mumbai (CST &rarr; Bandra)</option>
-                        <option value="delhi">Delhi (Connaught Place &rarr; Hauz Khas)</option>
-                        <option value="kolkata">Kolkata (Howrah &rarr; Park Street)</option>
-                        <option value="pune">Pune (Station &rarr; Koregaon Park)</option>
-                        <option value="ahmedabad">Ahmedabad (Station &rarr; Satellite)</option>
-                        <option value="jaipur">Jaipur (Station &rarr; MI Road)</option>
-                        <option value="custom">✏️ Custom Location (Search / Click Map)</option>
+                        <option value="gps">📍 Use My Real Device GPS Location</option>
+                        <option value="custom_search">🔍 Search Any City / Region (Type in box above)</option>
+                        
+                        <optgroup label="Tamil Nadu (Major Cities & Districts)">
+                            <option value="chennai" selected>Chennai (Central &rarr; Guindy)</option>
+                            <option value="coimbatore">Coimbatore (Gandhipuram &rarr; RS Puram)</option>
+                            <option value="madurai">Madurai (Meenakshi Temple &rarr; Mattuthavani)</option>
+                            <option value="trichy">Tiruchirappalli / Trichy (Central &rarr; Srirangam)</option>
+                            <option value="salem">Salem (New Bus Stand &rarr; Fairlands)</option>
+                            <option value="tirunelveli">Tirunelveli (Junction &rarr; Palayamkottai)</option>
+                            <option value="tiruppur">Tiruppur (Old Bus Stand &rarr; Avinashi Road)</option>
+                            <option value="erode">Erode (Bus Stand &rarr; Perundurai Road)</option>
+                            <option value="vellore">Vellore (Fort &rarr; Katpadi)</option>
+                            <option value="thanjavur">Thanjavur (Big Temple &rarr; New Bus Stand)</option>
+                            <option value="dindigul">Dindigul (Rock Fort &rarr; Bus Stand)</option>
+                            <option value="kanchipuram">Kanchipuram (Bus Stand &rarr; Temple Area)</option>
+                            <option value="nagercoil">Nagercoil / Kanyakumari (Vadasery &rarr; Cape)</option>
+                            <option value="pondicherry">Puducherry (Promenade Beach &rarr; JIPMER)</option>
+                        </optgroup>
+                        
+                        <optgroup label="Kerala">
+                            <option value="kochi">Kochi / Ernakulam (Marine Drive &rarr; Kakkanad InfoPark)</option>
+                            <option value="trivandrum">Thiruvananthapuram (East Fort &rarr; Technopark)</option>
+                            <option value="kozhikode">Kozhikode / Calicut (Beach &rarr; Mavoor Road)</option>
+                        </optgroup>
+                        
+                        <optgroup label="Karnataka">
+                            <option value="bengaluru">Bengaluru (Majestic &rarr; Koramangala)</option>
+                            <option value="mysuru">Mysuru (Palace &rarr; Infosys Campus)</option>
+                            <option value="mangaluru">Mangaluru (Hampankatta &rarr; Kadri)</option>
+                        </optgroup>
+                        
+                        <optgroup label="Andhra Pradesh & Telangana">
+                            <option value="hyderabad">Hyderabad (Secunderabad &rarr; Hitec City)</option>
+                            <option value="visakhapatnam">Visakhapatnam (RTC Complex &rarr; RK Beach)</option>
+                            <option value="vijayawada">Vijayawada (Bus Station &rarr; Benz Circle)</option>
+                        </optgroup>
+                        
+                        <optgroup label="Maharashtra, Gujarat & Rajasthan">
+                            <option value="mumbai">Mumbai (CST &rarr; Bandra)</option>
+                            <option value="pune">Pune (Station &rarr; Koregaon Park)</option>
+                            <option value="nagpur">Nagpur (Sitabuldi &rarr; Dharampeth)</option>
+                            <option value="ahmedabad">Ahmedabad (Station &rarr; Satellite)</option>
+                            <option value="surat">Surat (Station &rarr; Dumas Road)</option>
+                            <option value="jaipur">Jaipur (Station &rarr; MI Road)</option>
+                        </optgroup>
+                        
+                        <optgroup label="North & East India">
+                            <option value="delhi">Delhi (Connaught Place &rarr; Hauz Khas)</option>
+                            <option value="kolkata">Kolkata (Howrah &rarr; Park Street)</option>
+                            <option value="lucknow">Lucknow (Charbagh &rarr; Hazratganj)</option>
+                            <option value="chandigarh">Chandigarh (Sector 17 &rarr; Mohali)</option>
+                            <option value="patna">Patna (Station &rarr; Boring Road)</option>
+                            <option value="bhopal">Bhopal (MP Nagar &rarr; New Market)</option>
+                        </optgroup>
+                        
+                        <optgroup label="International Metros">
+                            <option value="london">London, UK (Trafalgar Sq &rarr; Westminster)</option>
+                            <option value="newyork">New York, USA (Times Sq &rarr; Brooklyn Bridge)</option>
+                            <option value="dubai">Dubai, UAE (Downtown &rarr; Marina)</option>
+                            <option value="singapore">Singapore (Marina Bay &rarr; Orchard)</option>
+                        </optgroup>
                     </select>
+                    <div class="form-text text-muted d-flex align-items-center mt-1" style="font-size: 0.72rem;">
+                        <i class="fa-solid fa-circle-check text-success me-1"></i> You can type <strong>any</strong> city in the search bar above or pick a region.
+                    </div>
                 </div>
 
                 <!-- Start Location (Origin) with Search -->
