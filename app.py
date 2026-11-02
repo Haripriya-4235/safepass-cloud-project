@@ -349,6 +349,16 @@ def api_location_ping():
     update_id = record_location_ping(user_id, lat, lng, speed, journey_id)
     return jsonify({'success': True, 'update_id': update_id})
 
+@app.route('/health')
+def health_check():
+    _, db_type = get_db_connection()
+    return jsonify({
+        'status': 'healthy',
+        'database': 'connected',
+        'engine': 'Amazon RDS (MySQL)' if db_type == 'mysql' else 'SQLite (Local Fallback)',
+        'app': 'SafePass Cloud Application'
+    }), 200
+
 if __name__ == '__main__':
     # Listen on 0.0.0.0 so that on EC2 it is immediately publicly accessible
     port = int(os.environ.get('PORT', 5000))

@@ -25,7 +25,7 @@
                 <span class="badge bg-danger rounded-circle p-2 me-2">
                     <i class="fa-solid fa-shield-halved text-white fs-5"></i>
                 </span>
-                <span>SafePass <small class="fw-normal text-muted fs-6">| AWS Cloud</small></span>
+                <span>SafePass <small class="fw-normal text-muted fs-6">| Women Safety</small></span>
             </a>
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -58,7 +58,7 @@
                     {% if session.get('user_role') == 'admin' %}
                     <li class="nav-item">
                         <a class="nav-link text-warning fw-semibold {% if request.endpoint == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">
-                            <i class="fa-solid fa-cloud me-1"></i> Cloud Admin
+                            <i class="fa-solid fa-shield-halved me-1"></i> Admin Console
                         </a>
                     </li>
                     {% endif %}
@@ -235,9 +235,7 @@
                     <strong>Women Safety & Safe Route Finder</strong> &bull; Cloud Computing Project
                 </div>
                 <div class="col-md-6 text-md-end">
-                    <span class="badge bg-primary-subtle text-primary border me-1"><i class="fa-brands fa-aws me-1"></i>EC2</span>
-                    <span class="badge bg-success-subtle text-success border me-1"><i class="fa-solid fa-database me-1"></i>RDS MySQL</span>
-                    <span class="badge bg-warning-subtle text-warning border"><i class="fa-solid fa-cloud-arrow-up me-1"></i>S3 Bucket</span>
+                    <span class="text-muted small">&copy; 2025 SafePass &mdash; Women Safety Portal</span>
                 </div>
             </div>
         </div>
